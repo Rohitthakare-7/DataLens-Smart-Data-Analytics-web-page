@@ -1,0 +1,27 @@
+Name,Age,City,Salary,Department,Start Date,Active
+Alice Johnson,28,New York,72000,Engineering,2021-03-15,true
+Bob Smith,35,San Francisco,95000,Marketing,2019-07-01,true
+Carol White,42,Chicago,88000,Engineering,2018-01-20,false
+David Brown,,Los Angeles,67000,Sales,2022-05-10,true
+Eve Davis,31,New York,91000,Engineering,2020-11-03,true
+Frank Miller,29,Chicago,,Marketing,2021-08-22,true
+Grace Lee,38,San Francisco,102000,Engineering,2017-04-14,false
+Henry Wilson,45,Los Angeles,78000,Sales,2016-09-30,true
+Ivy Chen,27,New York,69000,Marketing,2023-01-05,true
+Jack Taylor,33,,85000,Engineering,2019-12-18,true
+Alice Johnson,28,New York,72000,Engineering,2021-03-15,true
+Kate Anderson,40,Chicago,93000,Sales,2018-06-25,false
+Leo Garcia,36,San Francisco,87000,Marketing,2020-02-14,true
+Mia Robinson,24,New York,55000,Engineering,2023-07-01,true
+Noah Martinez,51,Los Angeles,110000,Engineering,2015-03-08,true
+Olivia Thomas,29,Chicago,71000,Sales,,true
+Peter Jackson,34,San Francisco,96000,Marketing,2019-10-12,false
+Quinn Adams,  28  ,New York,68000,Engineering,2022-09-01,true
+Rachel Lopez, ,Chicago,74000,Sales,2021-04-17,true
+Sam Wright,43,Los Angeles,99000,Engineering,2017-11-29,true
+,,,,,,
+Tina Hill,37,New York,83000,Marketing,2018-08-05,true
+Uma Patel,30,San Francisco,76000,Sales,2022-01-15,true
+Victor Cruz,46,Chicago,105000,Engineering,2016-02-20,false
+Wendy Kim,25,Los Angeles,58000,Marketing,2023-06-11,true
+Xavier Young,39,New York,92000,Engineering,2019-05-23,true

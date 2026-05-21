@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="DataLens — A premium, client-side data analytics tool. Upload, clean, sort, filter, visualize, and export your datasets entirely in-browser.">
+  <title>DataLens — Smart Data Analytics</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- Papa Parse for CSV -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <!-- SheetJS for Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div id="app">
+
+    <!-- ======== HEADER ======== -->
+    <header class="header">
+      <div class="header-brand">
+        <div class="header-logo">D</div>
+        <div>
+          <div class="header-title">DataLens</div>
+          <div class="header-subtitle">Smart Data Analytics</div>
+        </div>
+      </div>
+      <div class="header-info">
+        <div class="file-badge" id="fileBadge">
+          <span class="icon">📄</span>
+          <span id="fileName">—</span>
+          <span class="size" id="fileSize"></span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-sm btn-secondary" id="btnNewFile" title="Upload new file" style="display:none;">
+          📂 New File
+        </button>
+      </div>
+    </header>
+
+    <!-- ======== MAIN ======== -->
+    <div class="main-wrapper">
+
+      <!-- ---- Sidebar ---- -->
+      <nav class="sidebar" id="sidebar">
+        <div class="sidebar-section">
+          <div class="sidebar-label">Data</div>
+          <div class="nav-item active" data-view="upload" id="navUpload">
+            <span class="nav-icon">📤</span> Upload
+          </div>
+          <div class="nav-item disabled" data-view="preview" id="navPreview">
+            <span class="nav-icon">📊</span> Preview
+          </div>
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-label">Operations</div>
+          <div class="nav-item disabled" data-view="clean" id="navClean">
+            <span class="nav-icon">🧹</span> Clean
+          </div>
+          <div class="nav-item disabled" data-view="sort" id="navSort">
+            <span class="nav-icon">🔀</span> Sort
+          </div>
+          <div class="nav-item disabled" data-view="filter" id="navFilter">
+            <span class="nav-icon">🔍</span> Filter
+          </div>
+          <div class="nav-item disabled" data-view="columns" id="navColumns">
+            <span class="nav-icon">📐</span> Columns
+          </div>
+          <div class="nav-item disabled" data-view="findreplace" id="navFindReplace">
+            <span class="nav-icon">🔄</span> Find & Replace
+          </div>
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-label">Formulas & Analysis</div>
+          <div class="nav-item disabled" data-view="formulas" id="navFormulas">
+            <span class="nav-icon">🧮</span> Formulas
+          </div>
+          <div class="nav-item disabled" data-view="stats" id="navStats">
+            <span class="nav-icon">📈</span> Statistics
+          </div>
+          <div class="nav-item disabled" data-view="charts" id="navCharts">
+            <span class="nav-icon">📉</span> Visualize
+          </div>
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-label">Advanced Analytics</div>
+          <div class="nav-item disabled" data-view="groupby" id="navGroupBy">
+            <span class="nav-icon">📊</span> Group & Pivot
+          </div>
+          <div class="nav-item disabled" data-view="profiling" id="navProfiling">
+            <span class="nav-icon">🔬</span> Data Profiling
+          </div>
+          <div class="nav-item disabled" data-view="outliers" id="navOutliers">
+            <span class="nav-icon">⚠️</span> Outlier Detection
+          </div>
+          <div class="nav-item disabled" data-view="correlation" id="navCorrelation">
+            <span class="nav-icon">🔗</span> Correlation
+          </div>
+          <div class="nav-item disabled" data-view="crosstab" id="navCrossTab">
+            <span class="nav-icon">📋</span> Cross Tabulation
+          </div>
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-label">Output</div>
+          <div class="nav-item disabled" data-view="export" id="navExport">
+            <span class="nav-icon">💾</span> Export
+          </div>
+          <div class="nav-item disabled" data-view="history" id="navHistory">
+            <span class="nav-icon">🕐</span> History
+            <span class="badge" id="historyBadge" style="display:none">0</span>
+          </div>
+        </div>
+      </nav>
+
+      <!-- ---- Content Area ---- -->
+      <main class="content-area" id="contentArea">
+
+        <!-- VIEW: Upload -->
+        <div class="panel-view active" id="viewUpload">
+          <div class="upload-zone-wrapper">
+            <div class="upload-zone" id="uploadZone">
+              <span class="upload-icon">📂</span>
+              <div class="upload-title">Drop your data file here</div>
+              <div class="upload-subtitle">or click to browse from your computer</div>
+              <button class="upload-btn" id="uploadBtn">📎 Select File</button>
+              <div class="upload-formats">
+                <span class="format-tag">.csv</span>
+                <span class="format-tag">.xlsx</span>
+                <span class="format-tag">.xls</span>
+              </div>
+              <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" hidden>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW: Preview -->
+        <div class="panel-view" id="viewPreview">
+          <div class="glass-card">
+            <div class="card-header">
+              <div class="card-title"><span class="icon">📊</span> Data Preview</div>
+              <div class="flex items-center gap-8">
+                <span class="chip" id="chipRows">0 rows</span>
+                <span class="chip" id="chipCols">0 columns</span>
+              </div>
+            </div>
+            <div class="table-container" id="tableContainer"></div>
+            <div class="pagination" id="pagination"></div>
+          </div>
+        </div>
+
+        <!-- VIEW: Clean -->
+        <div class="panel-view" id="viewClean">
+          <div class="glass-card">
+            <div class="card-header">
+              <div class="card-title"><span class="icon">🧹</span> Data Cleaning</div>
+            </div>
+            <div id="cleanResult"></div>
+            <div class="glass-card" style="margin-bottom:16px;">
+              <div class="card-title mb-12">Remove Duplicates</div>
+              <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px;">Detect and remove rows that are exact duplicates across all columns.</p>
+              <button class="btn btn-primary btn-sm" id="btnRemoveDuplicates">🗑️ Remove Duplicates</button>
+            </div>
+            <div class="glass-card" style="margin-bottom:16px;">
+              <div class="card-title mb-12">Handle Missing Values</div>
+              <div class="form-group">
+                <label class="form-label">Select Column</label>
+                <select class="form-select" id="missingCol"><option value="__all__">All Columns</option></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Strategy</label>
+                <select class="form-select" id="missingStrategy">
+                  <option value="drop">Drop rows with missing values</option>
+                  <option value="mean">Fill with Mean (numeric only)</option>
+                  <option value="median">Fill with Median (numeric only)</option>
+                  <option value="mode">Fill with Mode (most frequent)</option>
+                  <option value="custom">Fill with Custom Value</option>
+                  <option value="ffill">Forward Fill</option>
+                  <option value="bfill">Backward Fill</option>
+                </select>
+              </div>
+              <div class="form-group hidden" id="customValueGroup">
+                <label class="form-label">Custom Value</label>
+                <input class="form-input" id="customValue" placeholder="Enter value…">
+              </div>
+              <button class="btn btn-primary btn-sm" id="btnHandleMissing">✨ Apply</button>
+            </div>
+            <div class="glass-card" style="margin-bottom:16px;">
+              <div class="card-title mb-12">Trim Whitespace</div>
+              <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px;">Strip leading and trailing spaces from all text cells.</p>
+              <button class="btn btn-primary btn-sm" id="btnTrimWhitespace">✂️ Trim All</button>
+            </div>
+            <div class="glass-card">
+              <div class="card-title mb-12">Remove Empty Rows / Columns</div>
+              <div class="btn-group">
+                <button class="btn btn-primary btn-sm" id="btnRemoveEmptyRows">Remove Empty Rows</button>
+                <button class="btn btn-secondary btn-sm" id="btnRemoveEmptyCols">Remove Empty Columns</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW: Sort -->
+        <div class="panel-view" id="viewSort">
+          <div class="glass-card">
+            <div class="card-header">
+              <div class="card-title"><span class="icon">🔀</span> Sort Data</div>
+            </div>
+            <div id="sortResult"></div>
+            <div class="form-group">
+              <label class="form-label">Sort by Column</label>
+              <select class="form-select" id="sortCol"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Order</label>
+              <select class="form-select" id="sortOrder">
+                <option value="asc">Ascending (A → Z, 0 → 9)</option>
+                <option value="desc">Descending (Z → A, 9 → 0)</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" id="btnSort">🔀 Sort</button>
+          </div>
+        </div>
+
+        <!-- VIEW: Filter -->
+        <div class="panel-view" id="viewFilter">
+          <div class="glass-card">
+            <div class="card-header">
+              <div class="card-title"><span class="icon">🔍</span> Filter Data</div>
+              <button class="btn btn-sm btn-secondary" id="btnClearFilter">Clear Filter</button>
+            </div>
+            <div id="filterResult"></div>
+            <div class="form-group">
+              <label class="form-label">Filter Column</label>
+              <select class="form-select" id="filterCol"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Condition</label>
+              <select class="form-select" id="filterCondition">
+                <option value="equals">Equals</option>
+                <option value="not_equals">Not Equals</option>
+                <option value="contains">Contains</option>
+                <option value="not_contains">Does Not Contain</option>
+                <option value="gt">Greater Than</option>
+                <option value="gte">Greater Than or Equal</option>
+                <option value="lt">Less Than</option>
+                <option value="lte">Less Than or Equal</option>
+                <option value="between">Between</option>
+                <option value="empty">Is Empty</option>
+                <option value="not_empty">Is Not Empty</option>
+              </select>
+            </div>
+            <div class="form-group" id="filterValueGroup">
+              <label class="form-label">Value</label>
+              <input class="form-input" id="filterValue" placeholder="Enter value…">
+            </div>
+            <div class="form-group hidden" id="filterValueGroup2">
+              <label class="form-label">And (for Between)</label>
+              <input class="form-input" id="filterValue2" placeholder="Enter upper bound…">
+            </div>
+            <button class="btn btn-primary" id="btnFilter">🔍 Apply Filter</button>
+          </div>
+        </div>
+
+        <!-- VIEW: Columns -->
+        <div class="panel-view" id="viewColumns">
+          <div class="glass-card">
+            <div class="card-header">
+              <div class="card-title"><span class="icon">📐</span> Column Management</div>
+            </div>
+            <div id="colResult"></div>
+            <div class="glass-card" style="margin-bottom:16px;">
+              <div class="card-title mb-12">Rename Column</div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Select Column</label><select class="form-select" id="renameCol"></select></div>
+                <div class="form-group"><label class="form-label">New Name</label><input class="form-input" id="renameTo" placeholder="New column name…"></div>
+              </div>
+              <button class="btn btn-primary btn-sm" id="btnRenameCol">✏️ Rename</button>
+            </div>
+            <div class="glass-card" style="margin-bottom:16px;">
+              <div class="card-title mb-12">Delete Columns</div>
+              <div class="form-group"><label class="form-label">Select Columns to Delete</label><div id="deleteColList" class="checkbox-group"></div></div>
+              <button class="btn btn-danger btn-sm" id="btnDeleteCols">🗑️ Delete Selected</button>
+            </div>
+            <div class="glass-card" style="margin-bottom:16px;">
+              <div class="card-title mb-12">Convert Data Type</div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Select Column</label><select class="form-select" id="convertCol"></select></div>
+                <div class="form-group"><label class="form-label">Convert To</label><select class="form-select" id="convertTo"><option value="number">Number</option><option value="text">Text</option><option value="date">Date</option></select></div>
+              </div>
+              <button class="btn btn-primary btn-sm" id="btnConvertType">🔧 Convert</button>
+            </div>
+            <div class="glass-card">
+              <div class="card-title mb-12">Add Computed Column</div>
+              <div class="form-group"><label class="form-label">New Column Name</label><input class="form-input" id="computedName" placeholder="e.g. Total"></div>
+              <div class="form-group"><label class="form-label">Operation</label><select class="form-select" id="computedOp"><option value="sum">Sum of two columns</option><option value="diff">Difference (A - B)</option><option value="product">Product (A × B)</option><option value="divide">Divide (A ÷ B)</option><option value="concat">Concatenate (Text)</option></select></div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Column A</label><select class="form-select" id="computedColA"></select></div>
+                <div class="form-group"><label class="form-label">Column B</label><select class="form-select" id="computedColB"></select></div>
+              </div>
+              <button class="btn btn-success btn-sm" id="btnAddComputed">➕ Add Column</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW: Find & Replace (FIXED) -->
+        <div class="panel-view" id="viewFindReplace">
+          <div class="glass-card">
+            <div class="card-header">
+              <div class="card-title"><span class="icon">🔄</span> Find & Replace</div>
+            </div>
+            <div id="frResult"></div>
+            <div class="form-group">
+              <label class="form-label">Column (or All)</label>
+              <select class="form-select" id="frCol"><option value="__all__">All Columns</option></select>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Find</label>
+                <input class="form-input" id="frFind" placeholder="Search text…">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Replace With</label>
+                <input class="form-input" id="frReplace" placeholder="Replacement…">
+              </div>
+            </div>
+            <div class="checkbox-item" style="margin-bottom:12px;">
+              <input type="checkbox" id="frCaseSensitive">
+              <label for="frCaseSensitive">Case Sensitive</label>
+            </div>
+            <div id="frMatchPreview" style="margin-bottom:12px;"></div>
+            <div class="btn-group">
+              <button class="btn btn-secondary" id="btnFindPreview">🔍 Find (Preview)</button>
+              <button class="btn btn-primary" id="btnFindReplace">🔄 Replace All</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW: Formulas -->
+        <div class="panel-view" id="viewFormulas">
+          <div class="glass-card">
+            <div class="card-header">
+              <div class="card-title"><span class="icon">🧮</span> Formula Engine</div>
+              <div class="chip">50+ Formulas</div>
+            </div>
+            <div class="formula-layout">
+              <!-- Formula category list -->
+              <div class="formula-sidebar" id="formulaCatalog"></div>
+              <!-- Formula editor -->
+              <div class="formula-editor" id="formulaEditor">
+                <div class="empty-state">
+                  <div class="empty-icon">🧮</div>
+                  <div class="empty-title">Select a formula</div>
+                  <div class="empty-text">Choose a formula from the list on the left to get started</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW: Stats -->
+        <div class="panel-view" id="viewStats">
+          <div class="glass-card">
+            <div class="card-header">
+              <div class="card-title"><span class="icon">📈</span> Statistical Summary</div>
+            </div>
+            <div class="stats-grid mb-16" id="statsOverview"></div>
+            <div class="table-container">
+              <table class="stats-table" id="statsTable"><thead id="statsTableHead"></thead><tbody id="statsTableBody"></tbody></table>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW: Charts -->
+        <div class="panel-view" id="viewCharts">
+          <div class="glass-card">
+            <div class="card-header">
+              <div class="card-title"><span class="icon">📉</span> Data Visualization</div>
+            </div>
+            <div class="form-row-3 mb-16">
+              <div class="form-group"><label class="form-label">Chart Type</label><select class="form-select" id="chartType"><option value="bar">Bar Chart</option><option value="line">Line Chart</option><option value="pie">Pie Chart</option><option value="doughnut">Doughnut Chart</option><option value="scatter">Scatter Plot</option><option value="polarArea">Polar Area</option></select></div>
+              <div class="form-group"><label class="form-label">X-Axis / Labels</label><select class="form-select" id="chartX"></select></div>
+              <div class="form-group"><label class="form-label">Y-Axis / Values</label><select class="form-select" id="chartY"></select></div>
+            </div>
+            <div class="form-group" style="max-width:300px;"><label class="form-label">Max Data Points</label><input class="form-input" id="chartLimit" type="number" value="50" min="5" max="500"></div>
+            <button class="btn btn-primary mb-16" id="btnRenderChart">📉 Generate Chart</button>
+            <div class="chart-container" id="chartContainer"><canvas id="mainChart"></canvas></div>
+          </div>
+        </div>
+
+        <!-- VIEW: Group By / Pivot -->
+        <div class="panel-view" id="viewGroupby">
+          <div class="glass-card">
+            <div class="card-header">
+              <div class="card-title"><span class="icon">📊</span> Group By / Pivot Table</div>
+            </div>
+            <div class="form-row-3 mb-16">
+              <div class="form-group">
+                <label class="form-label">Group By Column</label>
+                <select class="form-select" id="groupByCol"></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Value Column</label>
+                <select class="form-select" id="groupByValCol"></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Aggregation</label>
+                <select class="form-select" id="groupByAgg">
+                  <option value="sum">SUM</option>
+                  <option value="avg">AVERAGE</option>
+                  <option value="count">COUNT</option>
+                  <option value="countDistinct">COUNT DISTINCT</option>
+                  <option value="min">MIN</option>
+                  <option value="max">MAX</option>
+                  <option value="median">MEDIAN</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group" style="max-width:300px;">
+              <label class="form-label">Second Group By (optional)</label>
+              <select class="form-select" id="groupByCol2">
+                <option value="">— None —</option>
+              </select>
+            </div>
+            <div class="btn-group mb-16">
+              <button class="btn btn-primary" id="btnGroupBy">📊 Generate</button>
+              <button class="btn btn-secondary" id="btnGroupByChart">📉 Generate with Chart</button>
+            </div>
+            <div id="groupByResult"></div>
+          </div>
+        </div>
+
+        <!-- VIEW: Data Profiling -->
+        <div class="panel-view" id="viewProfiling">
+          <div class="glass-card">
+            <div class="card-header">
+              <div class="card-title"><span class="icon">🔬</span> Data Profiling</div>
+            </div>
+            <div id="profilingResult"></div>
+            <div class="mb-16">
+              <div class="card-title mb-12">Column Quality Overview</div>
+              <div class="table-container" id="profilingTable"></div>
+            </div>
+            <div>
+              <div class="card-title mb-12">Value Distribution</div>
+              <div class="form-group" style="max-width:300px;">
+                <label class="form-label">Select Column</label>
+                <select class="form-select" id="profileDistCol"></select>
+              </div>
+              <button class="btn btn-primary btn-sm mb-12" id="btnProfileDist">Show Distribution</button>
+              <div id="profileDistResult"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW: Outlier Detection -->
+        <div class="panel-view" id="viewOutliers">
+          <div class="glass-card">
+            <div class="card-header">
+              <div class="card-title"><span class="icon">⚠️</span> Outlier Detection</div>
+            </div>
+            <div id="outlierResult"></div>
+            <div class="form-row-3 mb-16">
+              <div class="form-group">
+                <label class="form-label">Numeric Column</label>
+                <select class="form-select" id="outlierCol"></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Method</label>
+                <select class="form-select" id="outlierMethod">
+                  <option value="iqr">IQR (Interquartile Range)</option>
+                  <option value="zscore">Z-Score</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Threshold</label>
+                <input class="form-input" id="outlierThreshold" type="number" step="0.1" value="1.5" placeholder="1.5 for IQR, 3 for Z-Score">
+              </div>
+            </div>
+            <div class="btn-group mb-16">
+              <button class="btn btn-primary" id="btnDetectOutliers">🔍 Detect Outliers</button>
+              <button class="btn btn-success" id="btnFlagOutliers">🏷️ Flag Outliers (New Column)</button>
+              <button class="btn btn-danger" id="btnRemoveOutliers">🗑️ Remove Outliers</button>
+            </div>
+            <div id="outlierDetails"></div>
+          </div>
+        </div>
+
+        <!-- VIEW: Correlation Matrix -->
+        <div class="panel-view" id="viewCorrelation">
+          <div class="glass-card">
+            <div class="card-header">
+              <div class="card-title"><span class="icon">🔗</span> Correlation Matrix</div>
+            </div>
+            <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:16px;">Pearson correlation coefficients between all numeric columns. Values range from -1 (inverse) to +1 (direct).</p>
+            <button class="btn btn-primary mb-16" id="btnCorrelation">🔗 Generate Correlation Matrix</button>
+            <div class="table-container" id="correlationResult"></div>
+          </div>
+        </div>
+
+        <!-- VIEW: Cross Tabulation -->
+        <div class="panel-view" id="viewCrosstab">
+          <div class="glass-card">
+            <div class="card-header">
+              <div class="card-title"><span class="icon">📋</span> Cross Tabulation</div>
+            </div>
+            <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:16px;">Count the frequency of combinations between two categorical columns.</p>
+            <div class="form-row mb-16">
+              <div class="form-group">
+                <label class="form-label">Row Variable</label>
+                <select class="form-select" id="crossTabRow"></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Column Variable</label>
+                <select class="form-select" id="crossTabCol"></select>
+              </div>
+            </div>
+            <button class="btn btn-primary mb-16" id="btnCrossTab">📋 Generate Cross Tab</button>
+            <div class="table-container" id="crossTabResult"></div>
+          </div>
+        </div>
+
+        <!-- VIEW: Export -->
+        <div class="panel-view" id="viewExport">
+          <div class="glass-card">
+            <div class="card-header">
+              <div class="card-title"><span class="icon">💾</span> Export Data</div>
+            </div>
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:20px;">Download your processed data in your preferred format.</p>
+            <div class="stats-grid">
+              <div class="stat-card" style="cursor:pointer" id="exportCsv"><div class="stat-label">CSV</div><div class="stat-value" style="font-size:1.1rem;">📄 Download .csv</div><div class="stat-sub">Comma-separated values</div></div>
+              <div class="stat-card" style="cursor:pointer" id="exportXlsx"><div class="stat-label">EXCEL</div><div class="stat-value" style="font-size:1.1rem;">📗 Download .xlsx</div><div class="stat-sub">Microsoft Excel format</div></div>
+              <div class="stat-card" style="cursor:pointer" id="exportJson"><div class="stat-label">JSON</div><div class="stat-value" style="font-size:1.1rem;">📋 Download .json</div><div class="stat-sub">JSON array of objects</div></div>
+              <div class="stat-card" style="cursor:pointer" id="exportReport"><div class="stat-label">REPORT</div><div class="stat-value" style="font-size:1.1rem;">📝 Summary Report</div><div class="stat-sub">Text summary with stats</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW: History -->
+        <div class="panel-view" id="viewHistory">
+          <div class="glass-card">
+            <div class="card-header">
+              <div class="card-title"><span class="icon">🕐</span> Operation History</div>
+              <div class="btn-group">
+                <button class="btn btn-sm btn-secondary" id="btnUndoLast">↩️ Undo Last</button>
+                <button class="btn btn-sm btn-danger" id="btnResetAll">🔄 Reset to Original</button>
+              </div>
+            </div>
+            <div class="history-list" id="historyList">
+              <div class="empty-state"><div class="empty-icon">🕐</div><div class="empty-title">No operations yet</div><div class="empty-text">Operations you perform will appear here</div></div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+
+    <!-- ======== STATUS BAR ======== -->
+    <div class="status-bar">
+      <div class="status-left">
+        <div class="status-item">
+          <span class="status-dot idle" id="statusDot"></span>
+          <span id="statusText">Ready — Upload a file to begin</span>
+        </div>
+      </div>
+      <div class="status-right">
+        <span id="statusRows">—</span>
+        <span id="statusCols">—</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="js/upload.js"></script>
+  <script src="js/table.js"></script>
+  <script src="js/operations.js"></script>
+  <script src="js/stats.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/formulas.js"></script>
+  <script src="js/advanced.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
